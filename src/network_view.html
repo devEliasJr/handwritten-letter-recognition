@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --bg: #11162a;
+      --text: #e6e8ef;
+      --muted: #8b93a7;
+      --accent: #7c5cff;
+      --cyan: #22d3ee;
+      --neg: #ff6b6b;
+      --win: #34d399;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #0e1117;
+      color: var(--text);
+      font-family: "Source Sans Pro", "Segoe UI", system-ui, sans-serif;
+    }
+
+    .wrap {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(ellipse at 55% 0%, #1f2550 0%, var(--bg) 55%, #0b0f1d 100%);
+    }
+
+    .heading {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .heading strong {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .heading span {
+      display: block;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .controls {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #222a42;
+      color: var(--text);
+      border: 1px solid #353e5e;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color .2s, transform .1s;
+    }
+
+    .icon:hover {
+      border-color: var(--accent);
+    }
+
+    .icon:active {
+      transform: scale(.94);
+    }
+
+    .icon svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 18px 12px;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 12.5px;
+      flex-wrap: wrap;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    #net {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .node {
+      cursor: pointer;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      background: #0a0e1c;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      line-height: 1.4;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+
+    .info {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .info:empty {
+      display: none;
+    }
+
+    .idle .controls,
+    .idle .bottom {
+      visibility: hidden;
+    }
+
+    .idle-message {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      padding: 18px 28px;
+      border-radius: 14px;
+      background: rgba(10, 14, 28, 0.78);
+      border: 1px solid #2f3760;
+      box-shadow: 0 0 40px rgba(124, 92, 255, 0.25);
+    }
+
+    .idle .idle-message {
+      display: block;
+    }
+
+    .idle-message strong {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .idle-message span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .info b {
+      color: var(--text);
+    }
+
+    .pos {
+      color: #a995ff;
+    }
+
+    .neg {
+      color: var(--neg);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap" id="wrap">
+    <svg id="net" viewBox="0 0 1500 800"></svg>
+    <div class="heading">
+      <strong>LETRA · Leitor de Escrita Treinado em Redes Artificiais</strong>
+      <span id="caption"></span>
+    </div>
+    <div class="controls">
+      <button class="icon" id="replay" title="Repetir animação">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z" />
+        </svg>
+      </button>
+      <button class="icon" id="pause" title="Pausar"></button>
+      <button class="icon" id="speed" title="Velocidade da animação">1x</button>
+    </div>
+    <div class="bottom">
+      <div class="info" id="info"></div>
+      <div class="legend">
+        <span><i style="background: var(--accent)"></i>Reforça a decisão</span>
+        <span><i style="background: var(--neg)"></i>Enfraquece a decisão</span>
+        <span><i style="background: repeating-linear-gradient(90deg, #8b93a7 0 4px, transparent 4px 7px)"></i>Ligação ilustrativa</span>
+      </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="idle-message">
+      <strong>Desenhe uma letra e clique em Detectar</strong>
+      <span>A rede vai processar camada por camada até chegar a uma decisão.</span>
+    </div>
+  </div>
+  <script>
+    const DATA = __DATA__;
+    const IDLE = Boolean(DATA.idle);
+
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.getElementById("net");
+    const wrap = document.getElementById("wrap");
+    const tooltip = document.getElementById("tooltip");
+    const info = document.getElementById("info");
+    const DEFAULT_INFO = "";
+
+    const TOP = 135, BOTTOM = 715;
+    const PHASE = 1.5, EDGE_TIME = 0.9, NODE_TIME = 0.6;
+    const LAST = DATA.layers.length - 1;
+    const DECISION_START = LAST * PHASE + EDGE_TIME + NODE_TIME + 0.3;
+    const DECISION_TIME = 0.9;
+    const ANIMATION_END = DECISION_START + DECISION_TIME;
+    const box = svg.getBoundingClientRect();
+    const UNITS_PER_PIXEL = box.height ? 800 / box.height : 1;
+    const WIDTH = Math.max(1100, box.width * UNITS_PER_PIXEL || 1500);
+    const RESERVED = IDLE ? 0 : (DATA.reserve || 0) * UNITS_PER_PIXEL;
+    const MARGIN_LEFT = 90, MARGIN_RIGHT = (IDLE ? 230 : 130) + RESERVED;
+    svg.setAttribute("viewBox", `0 0 ${WIDTH} 800`);
+    const xs = DATA.layers.map((_, index) => MARGIN_LEFT + (index * (WIDTH - MARGIN_LEFT - MARGIN_RIGHT)) / LAST);
+
+    function make(tag, attrs, parent) {
+      const element = document.createElementNS(NS, tag);
+      for (const key in attrs) element.setAttribute(key, attrs[key]);
+      (parent || svg).appendChild(element);
+      return element;
+    }
+
+    const clamp = value => Math.max(0, Math.min(1, value));
+    const percent = value => `${Math.round(value * 100)}%`;
+    const layerStart = layer => layer * PHASE;
+
+    make("defs", {}).innerHTML = `
+  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <radialGradient id="nodeFill"><stop offset="0%" stop-color="#c4b5ff"/><stop offset="100%" stop-color="#7c5cff"/></radialGradient>
+  <radialGradient id="winFill"><stop offset="0%" stop-color="#bbf7d0"/><stop offset="100%" stop-color="#10b981"/></radialGradient>`;
+
+    const edgeGroup = make("g", {});
+    const pulseGroup = make("g", {});
+    const nodeGroup = make("g", {});
+    const labelGroup = make("g", {});
+
+    DATA.layers.forEach((layer, index) => {
+      const titleY = index === 0 ? 515 : 88;
+      make("text", { x: xs[index], y: titleY, "text-anchor": "middle", fill: "#e6e8ef", "font-size": 17, "font-weight": 600 }, labelGroup).textContent = layer.title;
+      make("text", { x: xs[index], y: titleY + 20, "text-anchor": "middle", fill: "#8b93a7", "font-size": 12 }, labelGroup).textContent = layer.subtitle;
+      make("text", { x: xs[index], y: 760, "text-anchor": "middle", fill: "#8b93a7", "font-size": 13, "font-style": "italic" }, labelGroup).textContent = layer.caption;
+    });
+
+    const nodes = DATA.layers.map((layer, layerIndex) => {
+      const count = layer.nodes.length;
+      const step = (BOTTOM - TOP) / count;
+
+      return layer.nodes.map((data, index) => {
+        const node = {
+          ...data, layer: layerIndex, index,
+          x: xs[layerIndex], y: TOP + (index + 0.5) * step,
+          edges: [], neighbors: new Set(),
+        };
+        const group = make("g", { class: "node" }, nodeGroup);
+        node.group = group;
+
+        if (data.image) {
+          const size = layerIndex === 0 ? 112 : 44;
+          node.size = size;
+          make("rect", {
+            x: node.x - size / 2 - 3, y: node.y - size / 2 - 3, width: size + 6, height: size + 6,
+            rx: 8, fill: "#0a0e1c", stroke: layerIndex === 0 ? "#22d3ee" : "#7c5cff", "stroke-width": 1.5,
+          }, group);
+          make("image", {
+            href: data.image, x: node.x - size / 2, y: node.y - size / 2, width: size, height: size,
+            style: "image-rendering: pixelated",
+          }, group);
+          if (layerIndex > 0) {
+            node.text = make("text", { x: node.x + size / 2 + 8, y: node.y + 4, fill: "#c9cede", "font-size": 12 }, group);
+          }
+        } else if (layerIndex < LAST) {
+          node.shape = make("circle", { cx: node.x, cy: node.y, r: 11, fill: "url(#nodeFill)" }, group);
+          node.text = make("text", { x: node.x + 18, y: node.y + 4, fill: "#c9cede", "font-size": 12 }, group);
+        } else {
+          node.shape = make("circle", { cx: node.x, cy: node.y, r: 7.5, fill: "url(#nodeFill)" }, group);
+          make("text", { x: node.x + 21, y: node.y + 4.5, fill: "#e6e8ef", "font-size": 13, "font-weight": 600 }, group).textContent = data.label;
+          node.text = make("text", { x: node.x + 37, y: node.y + 4.5, fill: "#c9cede", "font-size": 12 }, group);
+        }
+
+        group.addEventListener("mouseenter", event => showTooltip(node, event));
+        group.addEventListener("mousemove", event => moveTooltip(event));
+        group.addEventListener("mouseleave", hideTooltip);
+        if (layerIndex === LAST) {
+          group.addEventListener("click", event => {
+            event.stopPropagation();
+            selectOutput(selected === node.index ? null : node.index);
+          });
+        }
+        return node;
+      });
+    });
+
+    const winner = nodes[LAST][DATA.winner];
+
+    function curve(x1, y1, x2, y2) {
+      const middle = (x1 + x2) / 2;
+      return [x1, y1, middle, y1, middle, y2, x2, y2];
+    }
+
+    function pointOnCurve(points, u) {
+      const [x0, y0, x1, y1, x2, y2, x3, y3] = points;
+      const a = (1 - u) ** 3, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u ** 2, d = u ** 3;
+      return [a * x0 + b * x1 + c * x2 + d * x3, a * y0 + b * y1 + c * y2 + d * y3];
+    }
+
+    const edges = [];
+    DATA.links.forEach((group, pair) => {
+      const strongest = group.items.map(item => Math.abs(item[2])).sort((a, b) => b - a);
+      const pulseThreshold = strongest[Math.min(strongest.length - 1, 29)];
+
+      group.items.forEach(([i, j, weight]) => {
+        const from = nodes[pair][i], to = nodes[pair + 1][j];
+        const points = curve(from.x, from.y, to.x, to.y);
+        const strength = Math.abs(weight);
+        const color = !group.real ? "#7c5cff" : weight >= 0 ? "#7c5cff" : "#ff6b6b";
+        const path = make("path", {
+          d: `M${points[0]},${points[1]} C${points[2]},${points[3]} ${points[4]},${points[5]} ${points[6]},${points[7]}`,
+          fill: "none", stroke: color, "stroke-width": 0.6 + 2.6 * strength,
+          "stroke-dasharray": group.real ? "" : "5 4", "stroke-linecap": "round",
+        }, edgeGroup);
+
+        const edge = { pair, from, to, weight, strength, points, path, real: group.real, jitter: Math.random() * 0.25 };
+        const pulses = IDLE ? Math.random() < 0.12 : strength >= pulseThreshold && strength > 0.05;
+        if (pulses) {
+          edge.pulse = make("circle", { r: 2.8, fill: weight >= 0 ? "#d7ccff" : "#ffb3b3", opacity: 0 }, pulseGroup);
+        }
+        from.edges.push(edge);
+        to.edges.push(edge);
+        from.neighbors.add(to);
+        to.neighbors.add(from);
+        edges.push(edge);
+      });
+    });
+
+    const ring = make("circle", { cx: winner.x, cy: winner.y, r: 12, fill: "none", stroke: "#34d399", "stroke-width": 2, opacity: 0 }, nodeGroup);
+    const decision = make("g", { opacity: 0 }, labelGroup);
+    const connectorStart = winner.x + 80, connectorEnd = WIDTH - RESERVED;
+    make("path", {
+      d: `M${connectorStart},${winner.y} C${connectorEnd - 30},${winner.y} ${connectorStart + 30},400 ${connectorEnd},400`,
+      fill: "none", stroke: "#34d399", "stroke-width": 1.5, "stroke-dasharray": "4 5", opacity: 0.7,
+    }, decision);
+    make("circle", { cx: connectorStart, cy: winner.y, r: 3, fill: "#34d399" }, decision);
+
+    let time = 0, previous = null, playing = true, speed = 1;
+    let focus = null, selected = null;
+
+    function nodeProgress(node) {
+      const start = node.layer === 0 ? 0 : layerStart(node.layer) + EDGE_TIME;
+      return clamp((time - start) / NODE_TIME);
+    }
+
+    function renderIdle() {
+      for (const layer of nodes) {
+        for (const node of layer) {
+          const breath = 0.2 + 0.08 * Math.sin(time * 1.4 + node.layer + node.index * 0.7);
+          node.group.setAttribute("opacity", breath.toFixed(3));
+          if (node.text) node.text.textContent = "";
+        }
+      }
+      for (const edge of edges) {
+        edge.path.setAttribute("stroke-width", 0.8);
+        edge.path.setAttribute("opacity", (0.06 + 0.03 * Math.sin(time + edge.jitter * 20)).toFixed(3));
+        if (edge.pulse) {
+          const u = (time * 0.22 + edge.jitter * 4) % 1;
+          const [x, y] = pointOnCurve(edge.points, u);
+          edge.pulse.setAttribute("cx", x.toFixed(1));
+          edge.pulse.setAttribute("cy", y.toFixed(1));
+          edge.pulse.setAttribute("opacity", (0.5 * Math.sin(Math.PI * u)).toFixed(3));
+        }
+      }
+      ring.setAttribute("opacity", 0);
+      decision.setAttribute("opacity", 0);
+    }
+
+    function render() {
+      if (IDLE) return renderIdle();
+      const decided = clamp((time - DECISION_START) / DECISION_TIME);
+
+      for (const layer of nodes) {
+        for (const node of layer) {
+          const progress = nodeProgress(node);
+          let opacity = progress === 0 ? 0.12 : 0.15 + 0.85 * progress * (0.3 + 0.7 * node.value);
+
+          if (node.layer === LAST && node !== winner) opacity *= 1 - 0.65 * decided;
+          if (node.layer === LAST && selected === node.index) opacity = 1;
+          if (focus && node !== focus && !focus.neighbors.has(node)) opacity *= 0.3;
+
+          node.group.setAttribute("opacity", opacity.toFixed(3));
+          if (node.text) node.text.textContent = percent(node.value * progress);
+          if (node.shape) {
+            const isWinner = node === winner && decided > 0;
+            node.shape.setAttribute("fill", isWinner ? "url(#winFill)" : "url(#nodeFill)");
+            node.shape.setAttribute("filter", progress > 0.95 && node.value > 0.55 ? "url(#glow)" : "");
+            if (node.layer === LAST) node.shape.setAttribute("r", 7.5 + (isWinner ? 3.5 * decided : 0));
+          }
+        }
+      }
+
+      for (const edge of edges) {
+        const layer = edge.pair + 1;
+        const progress = clamp((time - layerStart(layer)) / EDGE_TIME);
+        let opacity = (0.06 + 0.55 * edge.strength) * Math.min(1, progress * 1.6);
+
+        if (edge.pair === LAST - 1 && edge.to !== winner) opacity *= 1 - 0.75 * decided;
+        if (focus) {
+          const touches = edge.from === focus || edge.to === focus;
+          opacity = touches ? Math.max(opacity, 0.25 + 0.75 * edge.strength) : opacity * 0.08;
+        }
+        if (selected !== null) {
+          if (edge.pair === LAST - 1) opacity = edge.to.index === selected ? 0.25 + 0.75 * edge.strength : 0.02;
+          else opacity *= 0.25;
+        }
+        edge.path.setAttribute("opacity", opacity.toFixed(3));
+
+        if (edge.pulse) {
+          let u = clamp((time - layerStart(layer) - edge.jitter) / (EDGE_TIME - 0.25));
+          let visible = u > 0 && u < 1;
+          if (decided > 0 && edge.pair === LAST - 1 && edge.to === winner && edge.weight > 0) {
+            u = ((time - DECISION_START) * 0.55 + edge.jitter * 4) % 1;
+            visible = true;
+          }
+          if (visible) {
+            const [x, y] = pointOnCurve(edge.points, u);
+            edge.pulse.setAttribute("cx", x.toFixed(1));
+            edge.pulse.setAttribute("cy", y.toFixed(1));
+          }
+          edge.pulse.setAttribute("opacity", visible && !focus && selected === null ? 0.95 : 0);
+        }
+      }
+
+      ring.setAttribute("opacity", decided.toFixed(3));
+      ring.setAttribute("r", (14 + 2 * Math.sin(time * 4)).toFixed(2));
+      decision.setAttribute("opacity", decided.toFixed(3));
+    }
+
+    let announced = false;
+
+    function announceEnd() {
+      if (IDLE || announced || time < ANIMATION_END) return;
+      announced = true;
+      window.parent.document.body.dataset.animated = DATA.run;
+    }
+
+    function frame(now) {
+      if (previous !== null && playing) time += ((now - previous) / 1000) * speed;
+      previous = now;
+      render();
+      announceEnd();
+      requestAnimationFrame(frame);
+    }
+
+    function showTooltip(node, event) {
+      if (IDLE) return;
+      focus = node;
+      const layer = DATA.layers[node.layer];
+      const value = node.layer === LAST ? "Probabilidade" : "Ativação relativa";
+      const hint = node.layer === LAST ? '<br><span style="color:#8b93a7">Clique para ver os votos</span>' : "";
+      tooltip.innerHTML = `<b>${layer.title}</b> · ${node.label}<br>${value}: ${percent(node.value)}${hint}`;
+      tooltip.style.opacity = 1;
+      moveTooltip(event);
+    }
+
+    function moveTooltip(event) {
+      const box = wrap.getBoundingClientRect();
+      let left = event.clientX - box.left + 14;
+      if (left + tooltip.offsetWidth > box.width - 8) left = event.clientX - box.left - tooltip.offsetWidth - 14;
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${event.clientY - box.top + 12}px`;
+    }
+
+    function hideTooltip() {
+      focus = null;
+      tooltip.style.opacity = 0;
+    }
+
+    function selectOutput(index) {
+      if (IDLE) return;
+      selected = index;
+      if (index === null) {
+        info.innerHTML = DEFAULT_INFO;
+        return;
+      }
+      const output = nodes[LAST][index];
+      const incoming = output.edges.filter(edge => edge.to === output).sort((a, b) => b.weight - a.weight);
+      const describe = edge => `${edge.from.label} (${edge.weight > 0 ? "+" : ""}${Math.round(edge.weight * 100)}%)`;
+      const favor = incoming.filter(edge => edge.weight > 0).slice(0, 3).map(describe).join(", ") || "nenhum";
+      const against = incoming.filter(edge => edge.weight < 0).slice(-3).reverse().map(describe).join(", ") || "nenhum";
+      info.innerHTML = `Letra <b>${output.label}</b> (${percent(output.value)}) · <span class="pos">a favor:</span> ${favor} · <span class="neg">contra:</span> ${against}. Clique fora para voltar.`;
+    }
+
+    svg.addEventListener("click", () => selectOutput(null));
+    const pauseButton = document.getElementById("pause");
+    const speedButton = document.getElementById("speed");
+    const PAUSE_ICON = '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+    const PLAY_ICON = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    const SPEEDS = [0.5, 1, 2];
+
+    function setPlaying(value) {
+      playing = value;
+      pauseButton.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+      pauseButton.title = playing ? "Pausar" : "Continuar";
+    }
+
+    document.getElementById("replay").addEventListener("click", () => {
+      time = 0;
+      setPlaying(true);
+    });
+    pauseButton.addEventListener("click", () => setPlaying(!playing));
+    speedButton.addEventListener("click", () => {
+      speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+      speedButton.textContent = `${speed}x`;
+    });
+
+    document.getElementById("caption").textContent = DATA.caption || "";
+    setPlaying(true);
+    info.innerHTML = DEFAULT_INFO;
+    if (IDLE) wrap.classList.add("idle");
+    requestAnimationFrame(frame);
+  </script>
+</body>
+
+</html>
