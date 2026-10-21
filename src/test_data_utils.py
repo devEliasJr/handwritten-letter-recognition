@@ -1,4 +1,6 @@
 
+import numpy as np
+
 from data_utils import NUM_CLASSES, load_datasets
 
 
@@ -44,6 +46,17 @@ def main():
         print(f"Pixel range: {pixel_min:.4f} to {pixel_max:.4f}")
         print("Label batch shape:", labels.shape)
         print(f"Label range: {label_min} to {label_max}")
+
+    test_labels = np.concatenate([labels.numpy() for _, labels in test_dataset])
+    test_classes = np.unique(test_labels)
+
+    assert len(test_classes) == NUM_CLASSES, (
+        f"Test: expected {NUM_CLASSES} classes, found {len(test_classes)}"
+    )
+
+    counts = np.bincount(test_labels, minlength=NUM_CLASSES)
+    print(f"\nTest: all {NUM_CLASSES} classes present")
+    print(f"Samples per class: {counts.min()} to {counts.max()}")
 
     print("\nAll dataset checks passed!")
 

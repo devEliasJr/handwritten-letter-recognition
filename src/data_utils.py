@@ -22,9 +22,9 @@ def load_datasets(batch_size: int = 128):
     splits, info = tfds.load(
         DATASET_NAME,
         split=[
-            "train[:90%]",
+            "train[:80%]",
+            "train[80%:90%]",
             "train[90%:]",
-            "test",
         ],
         as_supervised=True,
         with_info=True,
