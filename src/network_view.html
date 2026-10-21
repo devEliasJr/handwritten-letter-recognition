@@ -569,6 +569,9 @@
     info.innerHTML = DEFAULT_INFO;
     if (IDLE) wrap.classList.add("idle");
     requestAnimationFrame(frame);
+    requestAnimationFrame(() => {
+      window.parent.document.body.dataset.ready = "1";
+    });
   </script>
 </body>
 

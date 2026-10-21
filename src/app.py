@@ -164,8 +164,33 @@ st.markdown(
         from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    .app-loading {
+        position: fixed; inset: 0; z-index: 100000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 1rem; transition: opacity 0.45s ease, visibility 0.45s ease;
+        background: radial-gradient(ellipse at 55% 0%, #1f2550 0%, #11162a 55%, #0b0f1d 100%);
+    }
+    body[data-ready] .app-loading { opacity: 0; visibility: hidden; pointer-events: none; }
+    body:has([data-testid="stAlert"]) .app-loading { display: none; }
+    .app-loading-ring {
+        width: 54px; height: 54px; border-radius: 50%;
+        border: 3px solid rgba(124, 92, 255, 0.2); border-top-color: #7c5cff;
+        box-shadow: 0 0 30px rgba(124, 92, 255, 0.3);
+        animation: spin 0.9s linear infinite;
+    }
+    .app-loading-title { color: #e6e8ef; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.2em; }
+    .app-loading-text { color: #8b93a7; font-size: 0.85rem; margin-top: -0.6rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     </style>
     """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    '<div class="app-loading"><div class="app-loading-ring"></div>'
+    '<div class="app-loading-title">LETRA</div>'
+    '<div class="app-loading-text">Carregando a rede neural…</div></div>',
     unsafe_allow_html=True,
 )
 
